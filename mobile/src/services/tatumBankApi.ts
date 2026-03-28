@@ -1,3 +1,6 @@
+/**
+ * Legacy names used across screens — implementations live in `api.service.ts`.
+ */
 import type {
   BuyUrlResponse,
   Chain,
@@ -9,47 +12,25 @@ import type {
   WalletsResponse,
   WithdrawResponse,
 } from "../types/api";
-import { getApiClient } from "./api";
-
-export async function login(email: string, password: string): Promise<LoginResponse> {
-  const { data } = await getApiClient().post<LoginResponse>("/auth/login", {
-    email,
-    password,
-  });
-  return data;
-}
-
-export async function register(
-  email: string,
-  password: string
-): Promise<RegisterResponse> {
-  const { data } = await getApiClient().post<RegisterResponse>(
-    "/auth/register",
-    { email, password }
-  );
-  return data;
-}
+import {
+  buyCrypto,
+  getBalances,
+  getDepositAddress,
+  getTransactions,
+  login,
+  provisionWallet,
+  register,
+  withdraw,
+} from "./api.service";
 
 export async function fetchWallets(): Promise<WalletsResponse> {
-  const { data } = await getApiClient().get<WalletsResponse>("/wallet");
-  return data;
+  return getBalances();
 }
 
-export async function provisionWallet(
-  chain: Chain
-): Promise<ProvisionWalletResponse> {
-  const { data } = await getApiClient().post<ProvisionWalletResponse>(
-    "/wallet",
-    { chain }
-  );
-  return data;
-}
+export { login, register, provisionWallet };
 
 export async function createDeposit(chain: Chain): Promise<DepositResponse> {
-  const { data } = await getApiClient().post<DepositResponse>("/deposit", {
-    chain,
-  });
-  return data;
+  return getDepositAddress(chain);
 }
 
 export async function requestWithdrawal(input: {
@@ -57,30 +38,16 @@ export async function requestWithdrawal(input: {
   amount: string;
   destinationAddress: string;
 }): Promise<WithdrawResponse> {
-  const { data } = await getApiClient().post<WithdrawResponse>(
-    "/withdraw",
-    input
-  );
-  return data;
+  return withdraw(input);
 }
 
 export async function fetchTransactions(): Promise<TransactionsResponse> {
-  const { data } = await getApiClient().get<TransactionsResponse>(
-    "/transactions"
-  );
-  return data;
+  return getTransactions();
 }
 
 export async function fetchBuyUrl(
   chain: Chain,
   fiatAmount?: number
 ): Promise<BuyUrlResponse> {
-  const params = new URLSearchParams({ chain });
-  if (fiatAmount !== undefined && Number.isFinite(fiatAmount)) {
-    params.set("fiatAmount", String(fiatAmount));
-  }
-  const { data } = await getApiClient().get<BuyUrlResponse>(
-    `/buy?${params.toString()}`
-  );
-  return data;
+  return buyCrypto(chain, fiatAmount);
 }

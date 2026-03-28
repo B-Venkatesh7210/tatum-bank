@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import {
+  BuyScreen,
   DashboardScreen,
   DepositScreen,
   LoginScreen,
@@ -51,6 +52,7 @@ function MainTabs() {
             Dashboard: "home",
             Deposit: "arrow-down-circle",
             Withdraw: "arrow-up-circle",
+            Buy: "card",
             Transactions: "list",
           };
           const name = map[route.name as keyof MainTabParamList];
@@ -65,6 +67,11 @@ function MainTabs() {
       />
       <Tab.Screen name="Deposit" component={DepositScreen} />
       <Tab.Screen name="Withdraw" component={WithdrawScreen} />
+      <Tab.Screen
+        name="Buy"
+        component={BuyScreen}
+        options={{ title: "Buy" }}
+      />
       <Tab.Screen name="Transactions" component={TransactionsScreen} />
     </Tab.Navigator>
   );

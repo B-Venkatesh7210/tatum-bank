@@ -48,3 +48,11 @@ export type TransactionItem = {
 export type TransactionsResponse = {
   transactions: TransactionItem[];
 };
+
+export type BuyUrlResponse = {
+  url: string;
+  walletAddress: string;
+  fiatAmount: number;
+  fiatCurrency: string;
+  chain: Chain;
+};

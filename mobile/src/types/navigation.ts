@@ -4,6 +4,7 @@ export type MainTabParamList = {
   Dashboard: undefined;
   Deposit: undefined;
   Withdraw: undefined;
+  Buy: undefined;
   Transactions: undefined;
 };
 

@@ -1,3 +1,4 @@
+export { BuyScreen } from "./BuyScreen";
 export { DashboardScreen } from "./DashboardScreen";
 export { DepositScreen } from "./DepositScreen";
 export { LoginScreen } from "./LoginScreen";

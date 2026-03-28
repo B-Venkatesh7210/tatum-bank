@@ -1,4 +1,5 @@
 import type {
+  BuyUrlResponse,
   Chain,
   DepositResponse,
   LoginResponse,
@@ -66,6 +67,20 @@ export async function requestWithdrawal(input: {
 export async function fetchTransactions(): Promise<TransactionsResponse> {
   const { data } = await getApiClient().get<TransactionsResponse>(
     "/transactions"
+  );
+  return data;
+}
+
+export async function fetchBuyUrl(
+  chain: Chain,
+  fiatAmount?: number
+): Promise<BuyUrlResponse> {
+  const params = new URLSearchParams({ chain });
+  if (fiatAmount !== undefined && Number.isFinite(fiatAmount)) {
+    params.set("fiatAmount", String(fiatAmount));
+  }
+  const { data } = await getApiClient().get<BuyUrlResponse>(
+    `/buy?${params.toString()}`
   );
   return data;
 }

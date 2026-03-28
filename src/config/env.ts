@@ -39,4 +39,16 @@ export const env = {
   /** Log KMS pending-template details (no on-chain effect). */
   tatumKmsSimulateLogging:
     process.env.TATUM_KMS_SIMULATE_LOGGING === "true",
+
+  /** Transak (fiat on-ramp) — use staging keys until production approval */
+  transakUseStaging: process.env.TRANSAK_USE_STAGING !== "false",
+  transakApiKey: process.env.TRANSAK_API_KEY ?? "",
+  transakApiSecret: process.env.TRANSAK_API_SECRET ?? "",
+  /** Hostname only, e.g. `app.example.com` or `localhost:5173` (no protocol) */
+  transakReferrerDomain: process.env.TRANSAK_REFERRER_DOMAIN ?? "",
+  transakDefaultFiatAmount: (() => {
+    const n = Number(process.env.TRANSAK_DEFAULT_FIAT_AMOUNT ?? "100");
+    return Number.isFinite(n) && n > 0 ? n : 100;
+  })(),
+  transakFiatCurrency: process.env.TRANSAK_FIAT_CURRENCY ?? "USD",
 } as const;

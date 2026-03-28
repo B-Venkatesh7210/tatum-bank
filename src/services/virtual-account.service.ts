@@ -1,13 +1,7 @@
 import axios, { type AxiosInstance } from "axios";
 import { env } from "../config/env";
+import { getLedgerCurrency } from "../tatum/chain-routing";
 import type { Chain } from "../types/custody";
-
-/** Ledger currency codes for native assets (CreateAccountXpub). */
-const CHAIN_TO_LEDGER_CURRENCY: Record<Chain, string> = {
-  ETH: "ETH",
-  MATIC: "MATIC",
-  BTC: "BTC",
-};
 
 export type TatumCustomerRegistration = {
   externalId: string;
@@ -122,7 +116,7 @@ export class VirtualAccountService {
   async createVirtualAccountForUser(
     input: CreateVirtualAccountRequest
   ): Promise<TatumVirtualAccount> {
-    const currency = CHAIN_TO_LEDGER_CURRENCY[input.chain];
+    const currency = getLedgerCurrency(input.chain);
     const body = {
       currency,
       xpub: input.xpub,

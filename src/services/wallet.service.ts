@@ -1,12 +1,10 @@
 import axios, { type AxiosInstance } from "axios";
 import { env } from "../config/env";
+import {
+  addressFromXpubEndpoint,
+  walletEndpoint,
+} from "../tatum/chain-routing";
 import type { Chain } from "../types/custody";
-
-const CHAIN_PATH: Record<Chain, string> = {
-  ETH: "ethereum",
-  MATIC: "polygon",
-  BTC: "bitcoin",
-};
 
 export type CreateWalletResult = {
   chain: Chain;
@@ -137,10 +135,9 @@ export class WalletService {
    * Registers xpub→chain so {@link generateAddress} can resolve the REST path.
    */
   async createWallet(chain: Chain): Promise<CreateWalletResult> {
-    const segment = CHAIN_PATH[chain];
     try {
       const { data } = await this.http.get<TatumWalletResponse>(
-        `/v3/${segment}/wallet`
+        walletEndpoint(chain)
       );
 
       if (!data?.xpub || !data?.mnemonic) {
@@ -173,8 +170,7 @@ export class WalletService {
       );
     }
 
-    const segment = CHAIN_PATH[chain];
-    const path = `/v3/${segment}/address/${encodeURIComponent(xpub)}/${index}`;
+    const path = addressFromXpubEndpoint(chain, xpub, index);
 
     try {
       const { data } = await this.http.get<TatumAddressResponse>(path);

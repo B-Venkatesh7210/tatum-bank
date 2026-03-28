@@ -5,6 +5,7 @@ import { env } from "./config/env";
 import { apiRouter } from "./routes";
 import { healthRouter } from "./routes/health.routes";
 import { tatumWebhookRouter } from "./routes/tatum-webhook.routes";
+import { buyRouter } from "./routes/buy.routes";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use("/health", healthRouter);
+app.use(buyRouter);
 app.use("/api", apiRouter);
 
 app.listen(env.port, () => {

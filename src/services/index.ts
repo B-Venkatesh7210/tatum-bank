@@ -4,3 +4,6 @@ export * from "./virtual-account.service";
 export * from "./deposit-webhook.service";
 export * from "./withdrawal.service";
 export * from "./ledger-internal-transfer.service";
+export * from "./tatum-chain.service";
+export * from "../tatum";
+export * from "./transak.service";

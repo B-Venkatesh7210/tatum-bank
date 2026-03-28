@@ -25,4 +25,18 @@ export const env = {
   webhookSkipHmacVerify:
     process.env.WEBHOOK_SKIP_HMAC_VERIFY === "true" &&
     process.env.NODE_ENV !== "production",
+  /**
+   * Default Tatum KMS wallet signature IDs (UUID) per chain when `wallets.tatum_signature_id` is null.
+   * @see https://github.com/tatumio/tatum-kms
+   */
+  tatumKmsSignatureIdEth: process.env.TATUM_KMS_SIGNATURE_ID_ETH ?? "",
+  tatumKmsSignatureIdMatic: process.env.TATUM_KMS_SIGNATURE_ID_MATIC ?? "",
+  tatumKmsSignatureIdBtc: process.env.TATUM_KMS_SIGNATURE_ID_BTC ?? "",
+  tatumKmsDerivationIndex: (() => {
+    const n = Number(process.env.TATUM_KMS_DERIVATION_INDEX ?? "0");
+    return Number.isFinite(n) ? n : 0;
+  })(),
+  /** Log KMS pending-template details (no on-chain effect). */
+  tatumKmsSimulateLogging:
+    process.env.TATUM_KMS_SIMULATE_LOGGING === "true",
 } as const;

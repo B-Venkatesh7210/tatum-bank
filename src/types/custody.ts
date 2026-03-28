@@ -32,6 +32,8 @@ export interface WalletRow {
   user_id: UUID;
   chain: Chain;
   xpub: string;
+  tatum_signature_id: string | null;
+  kms_derivation_index: number;
   created_at: Date;
   updated_at: Date;
 }

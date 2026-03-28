@@ -18,12 +18,14 @@ CREATE TABLE users (
 -- HD wallets (xpub per chain; maps to Tatum wallet / key material)
 -- ---------------------------------------------------------------------------
 CREATE TABLE wallets (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id    UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-  chain      VARCHAR(16) NOT NULL,
-  xpub       TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id               UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  chain                 VARCHAR(16) NOT NULL,
+  xpub                  TEXT NOT NULL,
+  tatum_signature_id  VARCHAR(64),
+  kms_derivation_index  INTEGER NOT NULL DEFAULT 0,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT wallets_user_chain_unique UNIQUE (user_id, chain),
   CONSTRAINT wallets_chain_check CHECK (chain IN ('ETH', 'MATIC', 'BTC'))
 );

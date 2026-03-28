@@ -1,34 +1,21 @@
 import type { Request, Response } from "express";
 import { env } from "../config/env";
 import { createTransakBuyUrl } from "../services/transak.service";
-import type { Chain } from "../types/custody";
 import { logger } from "../utils/logger";
-
-const CHAINS: Chain[] = ["ETH", "MATIC", "BTC"];
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function parseChain(raw: unknown): Chain | null {
-  if (typeof raw !== "string") {
-    return null;
-  }
-  const u = raw.toUpperCase();
-  return CHAINS.includes(u as Chain) ? (u as Chain) : null;
-}
+import { parseChain } from "../utils/parse-chain";
 
 /**
- * `GET /buy?userId=<uuid>&chain=ETH|MATIC|BTC&fiatAmount=<number>`
- * Returns JSON `{ url }` for redirecting the browser to Transak.
+ * `GET /buy?chain=ETH|MATIC|BTC&fiatAmount=<number>` (authenticated)
+ * Returns JSON `{ url, walletAddress, ... }` for redirecting the browser to Transak.
  */
 export async function getBuyRedirect(
   req: Request,
   res: Response
 ): Promise<void> {
   try {
-    const userId = req.query.userId;
-    if (typeof userId !== "string" || !UUID_RE.test(userId)) {
-      res.status(400).json({ error: "userId must be a valid UUID" });
+    const userId = req.auth?.userId;
+    if (!userId) {
+      res.status(401).json({ error: "unauthorized" });
       return;
     }
 

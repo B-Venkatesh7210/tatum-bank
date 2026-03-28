@@ -51,4 +51,8 @@ export const env = {
     return Number.isFinite(n) && n > 0 ? n : 100;
   })(),
   transakFiatCurrency: process.env.TRANSAK_FIAT_CURRENCY ?? "USD",
+
+  /** HS256 secret for JWT access tokens (required when using /auth). */
+  jwtSecret: process.env.JWT_SECRET ?? "",
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
 } as const;

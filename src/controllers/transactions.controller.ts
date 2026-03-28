@@ -1,11 +1,8 @@
 import type { Request, Response } from "express";
 import { getUserTransactionHistory } from "../services/transaction-history.service";
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
 /**
- * `GET /transactions/:userId`
+ * `GET /transactions` (authenticated — uses JWT `sub` as user id)
  * Returns `{ transactions: [{ amount, type, status, txHash, ... }] }`.
  */
 export async function listUserTransactions(
@@ -13,9 +10,9 @@ export async function listUserTransactions(
   res: Response
 ): Promise<void> {
   try {
-    const userId = req.params.userId;
-    if (typeof userId !== "string" || !UUID_RE.test(userId)) {
-      res.status(400).json({ error: "userId must be a valid UUID" });
+    const userId = req.auth?.userId;
+    if (!userId) {
+      res.status(401).json({ error: "unauthorized" });
       return;
     }
 

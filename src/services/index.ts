@@ -1,2 +1,2 @@
 /** Domain / external integrations — add services here as the project grows. */
-export {};
+export * from "./wallet.service";

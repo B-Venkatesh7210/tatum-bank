@@ -4,10 +4,18 @@ import cors from "cors";
 import { env } from "./config/env";
 import { apiRouter } from "./routes";
 import { healthRouter } from "./routes/health.routes";
+import { tatumWebhookRouter } from "./routes/tatum-webhook.routes";
 
 const app = express();
 
 app.use(cors());
+
+app.use(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  tatumWebhookRouter
+);
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 

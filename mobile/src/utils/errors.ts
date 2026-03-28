@@ -2,14 +2,24 @@ import axios from "axios";
 
 export function getErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
-    const data = err.response?.data as { error?: string } | undefined;
+    if (!err.response) {
+      if (err.code === "ECONNABORTED") {
+        return "Request timed out. Check your connection and API URL.";
+      }
+      return "Network error. Check EXPO_PUBLIC_API_URL and that the server is running.";
+    }
+    const data = err.response.data as { error?: string } | undefined;
     if (data?.error) {
       return data.error;
     }
-    if (err.response?.status) {
-      return `Request failed (${err.response.status})`;
+    const status = err.response.status;
+    if (status === 401) {
+      return "Session expired or invalid. Please sign in again.";
     }
-    return err.message;
+    if (status === 503) {
+      return "Service temporarily unavailable. Try again shortly.";
+    }
+    return `Request failed (${status})`;
   }
   return err instanceof Error ? err.message : String(err);
 }

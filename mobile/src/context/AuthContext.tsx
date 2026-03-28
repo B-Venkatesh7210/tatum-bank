@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { setAuthToken, getAuthToken } from "../services/api";
-import * as api from "../services/tatumBankApi";
+import * as api from "../services/api.service";
 
 type AuthState = {
   token: string | null;

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Platform,
   Pressable,
   StyleSheet,
@@ -13,11 +12,13 @@ import QRCode from "react-native-qrcode-svg";
 import {
   ChainChips,
   Card,
+  ErrorBanner,
+  Loader,
   PrimaryButton,
   ScreenContainer,
 } from "../components";
 import type { Chain } from "../types/api";
-import * as api from "../services/tatumBankApi";
+import * as api from "../services/api.service";
 import { theme } from "../theme";
 import { getErrorMessage } from "../utils/errors";
 
@@ -42,14 +43,14 @@ export function DepositScreen() {
     setCopied(false);
     setLoading(true);
     try {
-      const { wallets } = await api.fetchWallets();
+      const { wallets } = await api.getBalances();
       const row = wallets.find((w) => w.chain === chain);
       if (row?.addresses?.length) {
         setAddress(row.addresses[0]);
         return;
       }
       await api.provisionWallet(chain);
-      const dep = await api.createDeposit(chain);
+      const dep = await api.getDepositAddress(chain);
       setAddress(dep.address);
     } catch (e) {
       setError(getErrorMessage(e));
@@ -64,7 +65,7 @@ export function DepositScreen() {
     setCopied(false);
     setLoadingNew(true);
     try {
-      const dep = await api.createDeposit(chain);
+      const dep = await api.getDepositAddress(chain);
       setAddress(dep.address);
     } catch (e) {
       setError(getErrorMessage(e));
@@ -82,19 +83,45 @@ export function DepositScreen() {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  const blocking = loading || loadingNew;
+
   return (
     <ScreenContainer scroll>
+      <Loader
+        visible={loading && !loadingNew}
+        overlay
+        message="Fetching deposit address…"
+      />
+      <Loader
+        visible={loadingNew && !loading}
+        overlay
+        message="Generating new address…"
+      />
+
       <Text style={styles.title}>Deposit</Text>
       <Text style={styles.subtitle}>
         Choose a network, load your deposit address, then send crypto to it.
         Always verify the address before transferring.
       </Text>
 
+      {error ? (
+        <View style={styles.banner}>
+          <ErrorBanner
+            message={error}
+            onRetry={() => void fetchOrCreateAddress()}
+          />
+        </View>
+      ) : null}
+
       <Text style={styles.label}>Network</Text>
-      <ChainChips value={chain} onChange={setChain} />
+      <ChainChips
+        value={chain}
+        onChange={setChain}
+        disabled={blocking}
+      />
 
       <PrimaryButton
-        title={loading ? "Loading…" : "Get deposit address"}
+        title="Get deposit address"
         onPress={() => void fetchOrCreateAddress()}
         loading={loading}
         disabled={loadingNew}
@@ -108,8 +135,6 @@ export function DepositScreen() {
         variant="outline"
         style={styles.secondaryBtn}
       />
-
-      {error ? <Text style={styles.error}>{error}</Text> : null}
 
       {address ? (
         <Card style={styles.resultCard}>
@@ -162,21 +187,18 @@ export function DepositScreen() {
         </Card>
       ) : !loading && !error ? (
         <Text style={styles.hint}>
-          Tap &quot;Get deposit address&quot; to fetch from your account (or
-          create a wallet + first address).
+          Tap &quot;Get deposit address&quot; to load from your account (creates
+          wallet + address if needed).
         </Text>
-      ) : null}
-
-      {loading && !address ? (
-        <View style={styles.inlineLoading}>
-          <ActivityIndicator color={theme.colors.accent} />
-        </View>
       ) : null}
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  banner: {
+    marginBottom: theme.spacing.md,
+  },
   title: {
     fontSize: theme.fontSize.xl,
     fontWeight: "700",
@@ -197,11 +219,6 @@ const styles = StyleSheet.create({
   },
   secondaryBtn: {
     marginTop: theme.spacing.md,
-  },
-  error: {
-    color: theme.colors.error,
-    marginTop: theme.spacing.md,
-    fontSize: theme.fontSize.sm,
   },
   hint: {
     marginTop: theme.spacing.lg,
@@ -263,7 +280,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.md,
     borderWidth: 1,
     borderColor: theme.colors.accent,
-    backgroundColor: "rgba(220, 38, 38, 0.08)",
+    backgroundColor: theme.colors.accentMuted,
   },
   copyBtnPressed: {
     opacity: 0.85,
@@ -277,9 +294,5 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.md,
     fontWeight: "600",
     color: theme.colors.success,
-  },
-  inlineLoading: {
-    marginTop: theme.spacing.lg,
-    alignItems: "center",
   },
 });

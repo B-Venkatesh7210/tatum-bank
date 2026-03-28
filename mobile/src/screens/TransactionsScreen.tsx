@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -9,9 +8,9 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { ScreenContainer } from "../components";
+import { ErrorBanner, Loader, ScreenContainer } from "../components";
 import type { TransactionItem } from "../types/api";
-import * as api from "../services/tatumBankApi";
+import * as api from "../services/api.service";
 import { theme } from "../theme";
 import { getErrorMessage } from "../utils/errors";
 
@@ -116,7 +115,7 @@ export function TransactionsScreen() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const { transactions } = await api.fetchTransactions();
+      const { transactions } = await api.getTransactions();
       setItems(transactions);
     } catch (e) {
       setError(getErrorMessage(e));
@@ -147,9 +146,20 @@ export function TransactionsScreen() {
         <Text style={styles.subtitle}>
           Deposits, withdrawals, and transfers across your accounts.
         </Text>
+        {error ? (
+          <View style={styles.banner}>
+            <ErrorBanner
+              message={error}
+              onRetry={() => {
+                setLoading(true);
+                void load();
+              }}
+            />
+          </View>
+        ) : null}
       </View>
     ),
-    []
+    [error, load]
   );
 
   const empty = useMemo(
@@ -171,29 +181,17 @@ export function TransactionsScreen() {
 
   return (
     <ScreenContainer scroll={false}>
-      {error ? (
-        <View style={styles.errorBanner}>
-          <Ionicons
-            name="warning-outline"
-            size={20}
-            color={theme.colors.error}
-          />
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : null}
-
-      {loading && !refreshing ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color={theme.colors.accent} />
-          <Text style={styles.loadingLabel}>Loading transactions…</Text>
-        </View>
-      ) : null}
+      <Loader
+        visible={loading && !refreshing}
+        overlay
+        message="Loading transactions…"
+      />
 
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={listHeader}
-        ListEmptyComponent={!loading ? empty : null}
+        ListEmptyComponent={!loading && !error ? empty : null}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -215,6 +213,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingBottom: theme.spacing.md,
   },
+  banner: {
+    marginTop: theme.spacing.md,
+  },
   kicker: {
     fontSize: theme.fontSize.xs,
     fontWeight: "600",
@@ -234,32 +235,6 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.sm,
     color: theme.colors.textMuted,
     lineHeight: 20,
-  },
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.sm,
-    marginHorizontal: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-    padding: theme.spacing.md,
-    borderRadius: theme.radius.md,
-    backgroundColor: "rgba(248, 113, 113, 0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(248, 113, 113, 0.35)",
-  },
-  errorText: {
-    flex: 1,
-    color: theme.colors.error,
-    fontSize: theme.fontSize.sm,
-  },
-  loadingWrap: {
-    paddingVertical: theme.spacing.lg,
-    alignItems: "center",
-    gap: theme.spacing.sm,
-  },
-  loadingLabel: {
-    color: theme.colors.textMuted,
-    fontSize: theme.fontSize.sm,
   },
   listContent: {
     paddingHorizontal: theme.spacing.md,

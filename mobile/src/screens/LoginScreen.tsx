@@ -1,24 +1,17 @@
 import React, { useState } from "react";
+import { Keyboard, StyleSheet, Text, View } from "react-native";
 import {
-  ActivityIndicator,
-  Keyboard,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { ScreenContainer } from "../components";
+  Button,
+  ErrorBanner,
+  Input,
+  Loader,
+  ScreenContainer,
+} from "../components";
 import { useAuth } from "../hooks/useAuth";
 import { getAuthToken } from "../services/api";
 import { theme } from "../theme";
 import { getErrorMessage } from "../utils/errors";
 
-/**
- * Backend `/auth/login` requires `{ email, password }` (min 8 chars).
- * For a single-field “email only” UX, we send this fixed password.
- * Register the same user first with this password, or change it to match your account.
- */
 const DEMO_LOGIN_PASSWORD = "password12345";
 
 function decodeJwtSub(token: string): string | null {
@@ -57,8 +50,7 @@ export function LoginScreen() {
     try {
       await login(trimmed, DEMO_LOGIN_PASSWORD);
       const token = await getAuthToken();
-      const sub = token ? decodeJwtSub(token) : null;
-      setUserId(sub);
+      setUserId(token ? decodeJwtSub(token) : null);
     } catch (e) {
       setError(getErrorMessage(e));
     } finally {
@@ -68,6 +60,8 @@ export function LoginScreen() {
 
   return (
     <ScreenContainer scroll={false}>
+      <Loader visible={loading} overlay message="Signing in…" />
+
       <View style={styles.center}>
         <View style={styles.card}>
           <View style={styles.accentRule} />
@@ -78,23 +72,30 @@ export function LoginScreen() {
             Enter your work email to access your wallet.
           </Text>
 
-          <Text style={styles.inputLabel}>Email</Text>
-          <TextInput
+          {error ? (
+            <View style={styles.bannerSlot}>
+              <ErrorBanner message={error} />
+            </View>
+          ) : null}
+
+          <Input
+            label="Email"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(t) => {
+              setEmail(t);
+              setError(null);
+              setUserId(null);
+            }}
             placeholder="you@company.com"
-            placeholderTextColor={theme.colors.textMuted}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
             autoComplete="email"
             editable={!loading}
-            style={styles.input}
             returnKeyType="go"
             onSubmitEditing={() => void onSubmit()}
+            containerStyle={styles.inputWrap}
           />
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
 
           {userId ? (
             <Text style={styles.userIdLine} numberOfLines={2}>
@@ -102,26 +103,17 @@ export function LoginScreen() {
             </Text>
           ) : null}
 
-          <Pressable
+          <Button
+            title="Continue"
             onPress={() => void onSubmit()}
-            disabled={loading || !email.trim()}
-            style={({ pressed }) => [
-              styles.cta,
-              (!email.trim() || loading) && styles.ctaDisabled,
-              pressed && email.trim() && !loading && styles.ctaPressed,
-            ]}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.ctaLabel}>Continue</Text>
-            )}
-          </Pressable>
+            loading={loading}
+            disabled={!email.trim()}
+            fullWidth
+          />
 
           <Text style={styles.footnote}>
-            Demo mode: password is fixed for API compatibility. Register with
-            email + password &quot;{DEMO_LOGIN_PASSWORD}&quot; first, or use an
-            account that uses this password.
+            Demo: API uses a fixed password ({DEMO_LOGIN_PASSWORD}). Register
+            with that password first.
           </Text>
 
           <Text style={styles.apiHint}>
@@ -180,57 +172,22 @@ const styles = StyleSheet.create({
   },
   sub: {
     marginTop: theme.spacing.sm,
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
     fontSize: theme.fontSize.sm,
     lineHeight: 20,
     color: theme.colors.textMuted,
   },
-  inputLabel: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: "600",
-    color: theme.colors.textMuted,
-    marginBottom: theme.spacing.xs,
+  bannerSlot: {
+    marginBottom: theme.spacing.md,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 14,
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text,
-    backgroundColor: theme.colors.surface,
-  },
-  error: {
-    marginTop: theme.spacing.md,
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.error,
+  inputWrap: {
+    marginBottom: theme.spacing.md,
   },
   userIdLine: {
-    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.md,
     fontSize: theme.fontSize.xs,
     color: theme.colors.success,
     fontWeight: "500",
-  },
-  cta: {
-    marginTop: theme.spacing.lg,
-    backgroundColor: theme.colors.accent,
-    borderRadius: theme.radius.md,
-    paddingVertical: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 52,
-  },
-  ctaDisabled: {
-    opacity: 0.45,
-  },
-  ctaPressed: {
-    backgroundColor: theme.colors.accentPressed,
-  },
-  ctaLabel: {
-    color: "#FFFFFF",
-    fontSize: theme.fontSize.md,
-    fontWeight: "600",
   },
   footnote: {
     marginTop: theme.spacing.lg,

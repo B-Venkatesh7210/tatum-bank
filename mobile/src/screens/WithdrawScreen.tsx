@@ -4,12 +4,14 @@ import { Ionicons } from "@expo/vector-icons";
 import {
   ChainChips,
   Card,
+  ErrorBanner,
+  Loader,
   PrimaryButton,
   ScreenContainer,
   TextField,
 } from "../components";
 import type { Chain } from "../types/api";
-import * as api from "../services/tatumBankApi";
+import * as api from "../services/api.service";
 import { theme } from "../theme";
 import { getErrorMessage } from "../utils/errors";
 
@@ -67,7 +69,7 @@ export function WithdrawScreen() {
 
     setLoading(true);
     try {
-      const res = await api.requestWithdrawal({
+      const res = await api.withdraw({
         chain,
         amount: amt,
         destinationAddress: dest,
@@ -82,6 +84,8 @@ export function WithdrawScreen() {
 
   return (
     <ScreenContainer scroll>
+      <Loader visible={loading} overlay message="Submitting withdrawal…" />
+
       <Text style={styles.kicker}>Send funds</Text>
       <Text style={styles.title}>Withdraw</Text>
       <Text style={styles.subtitle}>
@@ -89,11 +93,18 @@ export function WithdrawScreen() {
         transfers to another custody address settle via the ledger.
       </Text>
 
+      {error && !loading ? (
+        <View style={styles.banner}>
+          <ErrorBanner message={error} onRetry={() => void submit()} />
+        </View>
+      ) : null}
+
       <View style={styles.cardWrap}>
         <View style={styles.accentBar} />
         <Text style={styles.sectionLabel}>Network</Text>
         <ChainChips
           value={chain}
+          disabled={loading}
           onChange={(c) => {
             setChain(c);
             clearFeedback();
@@ -132,19 +143,6 @@ export function WithdrawScreen() {
         />
       </View>
 
-      {error ? (
-        <Card style={styles.errorCard}>
-          <View style={styles.msgRow}>
-            <Ionicons
-              name="close-circle"
-              size={22}
-              color={theme.colors.error}
-            />
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        </Card>
-      ) : null}
-
       {success ? (
         <Card style={styles.successCard}>
           <View style={styles.msgRow}>
@@ -162,6 +160,9 @@ export function WithdrawScreen() {
 }
 
 const styles = StyleSheet.create({
+  banner: {
+    marginBottom: theme.spacing.md,
+  },
   kicker: {
     fontSize: theme.fontSize.xs,
     fontWeight: "600",
@@ -208,11 +209,6 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.sm,
     fontWeight: "600",
   },
-  errorCard: {
-    marginTop: theme.spacing.sm,
-    backgroundColor: "rgba(248, 113, 113, 0.1)",
-    borderColor: "rgba(248, 113, 113, 0.35)",
-  },
   successCard: {
     marginTop: theme.spacing.sm,
     backgroundColor: "rgba(52, 211, 153, 0.08)",
@@ -222,12 +218,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: theme.spacing.sm,
-  },
-  errorText: {
-    flex: 1,
-    color: theme.colors.error,
-    fontSize: theme.fontSize.sm,
-    lineHeight: 20,
   },
   successText: {
     flex: 1,

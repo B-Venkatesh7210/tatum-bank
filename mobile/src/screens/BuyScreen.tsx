@@ -1,18 +1,15 @@
 import React, { useState } from "react";
-import {
-  Linking,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Linking, StyleSheet, Text, View } from "react-native";
 import {
   ChainChips,
+  ErrorBanner,
+  Input,
+  Loader,
   PrimaryButton,
   ScreenContainer,
 } from "../components";
 import type { Chain } from "../types/api";
-import * as api from "../services/tatumBankApi";
+import * as api from "../services/api.service";
 import { theme } from "../theme";
 import { getErrorMessage } from "../utils/errors";
 
@@ -28,9 +25,6 @@ function parseFiatAmount(raw: string): number | undefined {
   return n;
 }
 
-/**
- * GET /buy?chain=&fiatAmount= → `{ url, walletAddress, ... }` then opens Transak in the browser.
- */
 export function BuyScreen() {
   const [chain, setChain] = useState<Chain>("ETH");
   const [amountText, setAmountText] = useState("");
@@ -38,9 +32,13 @@ export function BuyScreen() {
   const [error, setError] = useState<string | null>(null);
   const [lastOpenedHint, setLastOpenedHint] = useState<string | null>(null);
 
-  async function openBuy() {
+  function clearFeedback() {
     setError(null);
     setLastOpenedHint(null);
+  }
+
+  async function openBuy() {
+    clearFeedback();
 
     const fiatAmount = parseFiatAmount(amountText);
     if (amountText.trim() && fiatAmount === undefined) {
@@ -50,7 +48,7 @@ export function BuyScreen() {
 
     setLoading(true);
     try {
-      const res = await api.fetchBuyUrl(chain, fiatAmount);
+      const res = await api.buyCrypto(chain, fiatAmount);
       const target = res.url;
       const canOpen = await Linking.canOpenURL(target);
       if (!canOpen) {
@@ -69,6 +67,8 @@ export function BuyScreen() {
 
   return (
     <ScreenContainer scroll>
+      <Loader visible={loading} overlay message="Opening Transak…" />
+
       <Text style={styles.kicker}>Fiat on-ramp</Text>
       <Text style={styles.title}>Buy crypto</Text>
       <Text style={styles.sub}>
@@ -76,24 +76,39 @@ export function BuyScreen() {
         in Transak (requires deposit address + Transak keys on the server).
       </Text>
 
+      {error ? (
+        <View style={styles.banner}>
+          <ErrorBanner
+            message={error}
+            onRetry={() => void openBuy()}
+          />
+        </View>
+      ) : null}
+
       <View style={styles.card}>
         <View style={styles.accent} />
         <Text style={styles.label}>Network</Text>
-        <ChainChips value={chain} onChange={setChain} />
+        <ChainChips
+          value={chain}
+          disabled={loading}
+          onChange={(c) => {
+            setChain(c);
+            clearFeedback();
+          }}
+        />
 
-        <Text style={styles.label}>Fiat amount (optional)</Text>
-        <Text style={styles.hintInput}>
-          Leave empty to use the server default. Currency is set on the API
-          (e.g. USD).
-        </Text>
-        <TextInput
+        <Input
+          label="Fiat amount (optional)"
+          helperText="Leave empty for the server default. Currency is set on the API (e.g. USD)."
           value={amountText}
-          onChangeText={setAmountText}
+          onChangeText={(t) => {
+            setAmountText(t);
+            clearFeedback();
+          }}
           placeholder="e.g. 100"
-          placeholderTextColor={theme.colors.textMuted}
           keyboardType="decimal-pad"
           editable={!loading}
-          style={styles.input}
+          containerStyle={styles.inputWrap}
         />
 
         <PrimaryButton
@@ -103,7 +118,6 @@ export function BuyScreen() {
         />
       </View>
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
       {lastOpenedHint ? (
         <Text style={styles.successHint}>{lastOpenedHint}</Text>
       ) : null}
@@ -112,6 +126,9 @@ export function BuyScreen() {
 }
 
 const styles = StyleSheet.create({
+  banner: {
+    marginBottom: theme.spacing.md,
+  },
   kicker: {
     fontSize: theme.fontSize.xs,
     fontWeight: "600",
@@ -157,27 +174,8 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.sm,
     fontWeight: "600",
   },
-  hintInput: {
-    fontSize: theme.fontSize.xs,
-    color: theme.colors.textMuted,
+  inputWrap: {
     marginBottom: theme.spacing.sm,
-    lineHeight: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 14,
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text,
-    backgroundColor: theme.colors.surface,
-    marginBottom: theme.spacing.lg,
-  },
-  error: {
-    marginTop: theme.spacing.md,
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.error,
   },
   successHint: {
     marginTop: theme.spacing.md,

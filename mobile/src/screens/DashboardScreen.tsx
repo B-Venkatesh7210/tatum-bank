@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -11,9 +10,9 @@ import {
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
-import { ScreenContainer } from "../components";
+import { ErrorBanner, Loader, ScreenContainer } from "../components";
 import { useAuth } from "../hooks/useAuth";
-import * as api from "../services/tatumBankApi";
+import * as api from "../services/api.service";
 import type { Chain, WalletSummary } from "../types/api";
 import type { MainTabParamList } from "../types/navigation";
 import { theme } from "../theme";
@@ -57,7 +56,7 @@ export function DashboardScreen() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const { wallets: w } = await api.fetchWallets();
+      const { wallets: w } = await api.getBalances();
       setWallets(w);
     } catch (e) {
       setError(getErrorMessage(e));
@@ -97,6 +96,12 @@ export function DashboardScreen() {
 
   return (
     <ScreenContainer scroll={false}>
+      <Loader
+        visible={loading && !refreshing}
+        overlay
+        message="Loading balances…"
+      />
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scroll}
@@ -130,7 +135,17 @@ export function DashboardScreen() {
           </Pressable>
         </View>
 
-        {error ? <Text style={styles.bannerError}>{error}</Text> : null}
+        {error ? (
+          <View style={styles.banner}>
+            <ErrorBanner
+              message={error}
+              onRetry={() => {
+                setLoading(true);
+                void load();
+              }}
+            />
+          </View>
+        ) : null}
 
         <View style={styles.card}>
           <View style={styles.cardAccent} />
@@ -139,27 +154,22 @@ export function DashboardScreen() {
             Pull to refresh · From virtual accounts
           </Text>
 
-          {loading && !refreshing ? (
-            <View style={styles.loadingRow}>
-              <ActivityIndicator color={theme.colors.accent} />
-              <Text style={styles.loadingText}>Loading balances…</Text>
-            </View>
-          ) : (
-            rows.map((row) => (
-              <View key={row.chain} style={styles.balanceRow}>
-                <View style={styles.assetLeft}>
-                  <View style={styles.assetIcon}>
-                    <Text style={styles.assetSymbol}>{row.chain}</Text>
+          {!loading || refreshing
+            ? rows.map((row) => (
+                <View key={row.chain} style={styles.balanceRow}>
+                  <View style={styles.assetLeft}>
+                    <View style={styles.assetIcon}>
+                      <Text style={styles.assetSymbol}>{row.chain}</Text>
+                    </View>
+                    <View>
+                      <Text style={styles.assetName}>{row.label}</Text>
+                      <Text style={styles.assetTicker}>{row.chain}</Text>
+                    </View>
                   </View>
-                  <View>
-                    <Text style={styles.assetName}>{row.label}</Text>
-                    <Text style={styles.assetTicker}>{row.chain}</Text>
-                  </View>
+                  <Text style={styles.assetAmount}>{row.balance}</Text>
                 </View>
-                <Text style={styles.assetAmount}>{row.balance}</Text>
-              </View>
-            ))
-          )}
+              ))
+            : null}
         </View>
 
         <View style={styles.card}>
@@ -271,14 +281,9 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.sm,
     fontWeight: "600",
   },
-  bannerError: {
-    marginHorizontal: theme.spacing.md,
+  banner: {
+    paddingHorizontal: theme.spacing.md,
     marginBottom: theme.spacing.md,
-    padding: theme.spacing.md,
-    borderRadius: theme.radius.md,
-    backgroundColor: "rgba(248,113,113,0.12)",
-    color: theme.colors.error,
-    fontSize: theme.fontSize.sm,
   },
   card: {
     marginHorizontal: theme.spacing.md,
@@ -315,16 +320,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
     fontSize: theme.fontSize.xs,
     color: theme.colors.textMuted,
-  },
-  loadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.md,
-  },
-  loadingText: {
-    color: theme.colors.textMuted,
-    fontSize: theme.fontSize.sm,
   },
   balanceRow: {
     flexDirection: "row",

@@ -8,9 +8,10 @@ const CHAINS: Chain[] = ["ETH", "MATIC", "BTC"];
 type Props = {
   value: Chain;
   onChange: (c: Chain) => void;
+  disabled?: boolean;
 };
 
-export function ChainChips({ value, onChange }: Props) {
+export function ChainChips({ value, onChange, disabled }: Props) {
   return (
     <View style={styles.row}>
       {CHAINS.map((c) => {
@@ -18,8 +19,9 @@ export function ChainChips({ value, onChange }: Props) {
         return (
           <Pressable
             key={c}
+            disabled={disabled}
             onPress={() => onChange(c)}
-            style={[styles.chip, active && styles.chipActive]}
+            style={[styles.chip, active && styles.chipActive, disabled && styles.chipDisabled]}
           >
             <Text style={[styles.chipText, active && styles.chipTextActive]}>
               {c}
@@ -48,6 +50,9 @@ const styles = StyleSheet.create({
   chipActive: {
     borderColor: theme.colors.accent,
     backgroundColor: theme.colors.surfaceElevated,
+  },
+  chipDisabled: {
+    opacity: 0.45,
   },
   chipText: {
     color: theme.colors.textMuted,

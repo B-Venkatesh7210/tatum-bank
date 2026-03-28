@@ -7,3 +7,4 @@ export * from "./ledger-internal-transfer.service";
 export * from "./tatum-chain.service";
 export * from "../tatum";
 export * from "./transak.service";
+export * from "./transaction-history.service";

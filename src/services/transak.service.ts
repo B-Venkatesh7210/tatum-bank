@@ -23,9 +23,13 @@ type CachedAccessToken = {
 let cachedToken: CachedAccessToken | null = null;
 
 function assertTransakConfigured(): void {
-  if (!env.transakApiKey || !env.transakApiSecret || !env.transakReferrerDomain) {
+  const missing: string[] = [];
+  if (!env.transakApiKey) missing.push("TRANSAK_API_KEY");
+  if (!env.transakApiSecret) missing.push("TRANSAK_API_SECRET");
+  if (!env.transakReferrerDomain) missing.push("TRANSAK_REFERRER_DOMAIN");
+  if (missing.length > 0) {
     throw new Error(
-      "Transak is not configured (TRANSAK_API_KEY, TRANSAK_API_SECRET, TRANSAK_REFERRER_DOMAIN)"
+      `Transak is not configured — set ${missing.join(", ")} in .env (restart the API server after saving)`
     );
   }
 }

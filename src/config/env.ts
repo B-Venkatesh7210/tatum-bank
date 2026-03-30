@@ -42,10 +42,10 @@ export const env = {
 
   /** Transak (fiat on-ramp) — use staging keys until production approval */
   transakUseStaging: process.env.TRANSAK_USE_STAGING !== "false",
-  transakApiKey: process.env.TRANSAK_API_KEY ?? "",
-  transakApiSecret: process.env.TRANSAK_API_SECRET ?? "",
+  transakApiKey: (process.env.TRANSAK_API_KEY ?? "").trim(),
+  transakApiSecret: (process.env.TRANSAK_API_SECRET ?? "").trim(),
   /** Hostname only, e.g. `app.example.com` or `localhost:5173` (no protocol) */
-  transakReferrerDomain: process.env.TRANSAK_REFERRER_DOMAIN ?? "",
+  transakReferrerDomain: (process.env.TRANSAK_REFERRER_DOMAIN ?? "").trim(),
   transakDefaultFiatAmount: (() => {
     const n = Number(process.env.TRANSAK_DEFAULT_FIAT_AMOUNT ?? "100");
     return Number.isFinite(n) && n > 0 ? n : 100;

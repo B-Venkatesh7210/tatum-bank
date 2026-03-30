@@ -62,11 +62,12 @@ export async function getBuyRedirect(
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (
-      message.includes("not configured") ||
-      message.includes("Transak is not configured")
-    ) {
-      res.status(503).json({ error: "Transak is not configured" });
+    if (message.startsWith("Transak is not configured")) {
+      res.status(503).json({ error: message });
+      return;
+    }
+    if (message.includes("DATABASE_URL is not configured")) {
+      res.status(503).json({ error: "DATABASE_URL is not configured" });
       return;
     }
     if (message.includes("no deposit address")) {
